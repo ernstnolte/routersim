@@ -1,4 +1,4 @@
-## Project Motivation
+## Program Scope
 This project aims to recreate the interface of a router cli and is coded in C++. 
 I chose to write my code using the JetBrains Clion IDE for the following reasons:
 -- easy connection to git repository
