@@ -7,7 +7,7 @@ The router simulator program can be broken down into phases that always follow t
 - Save & Logout
 
 ### Configuration
-When the program start it firstly defines a class User that will act as a template for user creation. Then it declares a boolean isFirstStart, 2 strings dnsAddress and dhcpAddress, an array arrUsers that is defined by the User class, and another array arrStaticAddresses to store static IP addresses.
+When the program starts it firstly defines a class User that will act as a template for user creation. Then it declares a boolean isFirstStart, 2 strings dnsAddress and dhcpAddress, an array arrUsers that is defined by the User class, and another array arrStaticAddresses to store static IP addresses.
 
 After that the program checks if a file called startup.conf exists and if it does not if will create it and write "true" to the first line of the file.
 
