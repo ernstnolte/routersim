@@ -4,18 +4,6 @@
 
 using namespace std;
 
-bool read_conf();               //complete
-bool valid_router(ipAddress);   //complete
-bool in_range(ipAddress);       //complete
-bool valid_rassword(password);  //complete
-void first_startup();
-void main_menu();
-void staticAddress_menu();
-void dns_menu();
-void dhcp_menu();
-void user_management();
-void reset_system();
-
 //this struct will define the format of a given user
 class User {
     string username;
@@ -23,10 +11,28 @@ class User {
     int privilege;
 };
 
+bool read_files(User arrUsers, string arrAddresses);
+bool valid_router();                //complete
+bool in_range();                    //complete
+bool valid_password();              //complete
+void add_user();
+void first_startup();
+int user_login();
+void main_menu();
+void staticAddress_menu();
+void dns_menu();
+void dhcp_menu();
+void user_management();
+void reset_system();
+
 int main()
 {
+    //declare an array to store users
+    User arrUsers[100];
+    //declare array to store static ip addresses
+    string arrAddresses[254];
     //call the read_conf function to get the first startup variable
-    bool isFirstStartup = read_conf();
+    bool isFirstStartup = read_files(*arrUsers, *arrAddresses);
 
     //if the conf file does not exist of contains true the first startup function will be called
     if (isFirstStartup)
@@ -39,7 +45,7 @@ int main()
     return 0;
 }
 
-bool read_conf()
+bool read_files(User arrUsers, string arrAddresses)
 {
     //init first startup bool and declare as true
     bool isFirstStarup = true;
@@ -70,12 +76,16 @@ bool read_conf()
 
     }
 
-    //return the value read from the file
+    //create the users.txt file that stores added users and add them to an array defined by the User class
+    ofstream outFile {"users.txt"};
+    outFile << "username" << ", password" << ", permission" << endl;
+
+    //return the value read from the conf file
     //if the text value is true it will return true, if it's false it will return false
     return isFirstStarup;
 }
 
-bool isValidRouter(ipAddress)
+bool valid_router(const string &ipAddress)
 {
     /*initializes a stream and array that will be used to
      *compactly process and store the blocks of the given ip address*/
@@ -116,8 +126,9 @@ bool isValidRouter(ipAddress)
 
     //if all conditions are met the ip address is valid
     return true;
-{
-bool isInRange(const string &ipAddress, const string &routerAddress)
+}
+
+bool in_range(const string &ipAddress, const string &routerAddress)
 {
     //initialize a stream and array for both addresses
     //also initialize iblock --> user input ip address blocks
@@ -158,7 +169,7 @@ bool isInRange(const string &ipAddress, const string &routerAddress)
     return true;
 }
 
-bool validPassword(const string &password)
+bool valid_password(const string &password)
 {
     /* the password must have the following:
      * 1 uppercase character
@@ -197,6 +208,38 @@ bool validPassword(const string &password)
     return hasUpper && hasLower && hasDigit && hasSpecial && (password.length() >= 8);
 }
 
+void add_user(User arrUsers[])
+{
+    //init variables the user will enter
+    string username, password, cPassword;
+    int permission;
+
+    //input username
+    cout << "Username: ";
+    cin >> username;
+    //input and password
+    cout << "Password: ";
+    cin >> password;
+    while (!valid_password(password))
+    {
+        cout << "Password does not meet minimum requirements. Enter again: ";
+        cin >> password;
+    }
+    //confirm password
+    cout << "Confirm password: ";
+    cin >> cPassword;
+    while (cPassword != password)
+    {
+        cout << "Passwords do not match. Enter again: ";
+        cin >> cPassword;
+    }
+
+    //add user information to array
+
+
+
+
+}
 
 void first_startup()
 {
@@ -257,7 +300,9 @@ void main_menu()
                 user_management();
                 break;
             case 5:
+                //declare a string that will change the value inside the conf file
                 reset_system();
+
                 break;
             default:
                 printf("!! Please select a valid option !!\n");
@@ -272,11 +317,13 @@ void staticAddress_menu()
 
 }
 
-void dns_menu() {
+void dns_menu()
+{
 
 }
 
-void dhcp_menu() {
+void dhcp_menu()
+{
 
 }
 
@@ -284,7 +331,50 @@ void user_management() {
 
 }
 
-void reset_system() {
+//this function allows the user to reset the router
+//done by overwriting both txt files and setting the conf file contents to default values
+void reset_system()
+{
+    int option;
+    cout << "Are you sure you want to reset the system?" << endl
+         << "1. Reset system" << endl
+         << "0. Return to main menu" << endl;
+    cin >> option;
 
+    //clears the screen
+    system("cls");
+
+    //switch to handle user option
+    switch (option)
+    {
+        //if the user chooses to reset the system they will have to confirm
+        //their choice by repeating a randomly generated 7 digit integer
+        case 1:
+            int randNum, compareNum;
+            cout << "Confirm by entering the 7 digit pin shown below:" << endl;
+            randNum = 1000000 + (rand()% 9000000);
+            cout << randNum << " : ";
+            cin >> compareNum;
+
+            if (compareNum != randNum)
+            {
+                cout << "The pin you provided does not match. Returning to the main menu." << endl;
+                break;
+            }
+
+            //change the value of the startup.conf file
+            string confFile {"startup.conf"};
+            ofstream outFile {confFile};
+            outFile << "false";
+            break;
+        //if the user changes their mind they can choose to exit this menu by typing 0
+        case 0:
+            break;
+        default:
+            cout << "Invalid selection, please try again: ";
+        return;
+    }
+    system("cls");
+
+    return "false";
 }
-
