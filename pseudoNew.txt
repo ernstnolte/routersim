@@ -1,0 +1,59 @@
+PROGRAM STARTS
+
+CLASS User:
+  string username
+  string password
+  int privilege
+
+INITIALIZE variables:
+  bool isFirstStartup
+  string dnsServer
+  string dhcpServer
+  string arrStaticAddresses[]
+  User arrUsers[]
+  int privilege
+
+IF file "startup.conf" does not exists:
+  WRITE "startup.conf"
+  OUTPUT "true" to line 1 of "startup.conf"
+
+//get initial values for important variables
+isFirstStartup = READ line 1 of "startup.conf"
+dnsServer = READ line 2 of "startup.conf"
+dhcpServer = Read line 3 of "startup.conf"
+
+IF NOT isFirstStartup:
+  username = USER INPUT
+  password = USER INPUT
+  //search for username-password combination
+  FOR each user in arrUsers:
+    IF user.username == username AND user.password == password:
+      privilege = user.privilege
+      BREAK for-loop
+    //if a match could not be found
+    END PROGRAM
+ELSE:
+  //if it is the first run of the program the setup process will begin
+  adminPassword = USER INPUT
+  //create entry for admin in arrUsers
+  arrUsers[0].username = "admin"
+  arrUsers[0].password = adminPassword
+  arrUsers[0].privilege = 0    //0 is the highest privilege level
+  //receive server addresses from user
+  dnsServer = USER INPUT
+  validate IP address entered and re-enter if invalid
+  dhcpServer = USER INPUT
+  validate IP address entered and re-enter if invalid
+  //save values of server IPs to startup.conf file
+  WRITE FILE "startup.conf" line 2 = dnsServer
+  WRITE FILE "startup.conf" line 3 = dhcpServer
+
+  privilege = 0
+  
+
+  
+
+
+
+
+
