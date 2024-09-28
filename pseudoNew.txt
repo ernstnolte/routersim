@@ -83,8 +83,10 @@ WHILE mainOption NOT 0:
       //display all current users
       int index = 0
       int option
-      FOR user IN arrUsers:
-        DISPLAY index+1 (tab) user.username (tab) user.privilege
+      FOR ip IN arrStaticAddresses:
+        DISPLAY index+1 (tab) ip
+        index++
+      index = 0
 
       DISPLAY menu options to user:
         1. Add address
@@ -150,14 +152,58 @@ WHILE mainOption NOT 0:
     CASE 4:
       IF privilege NOT 0:
         DISPLAY "Insufficient privileges
+        RETURN
+      //display all current users
+      int index = 0
+      int option
+      FOR ip IN arrStaticAddresses:
+        DISPLAY index+1 (tab) user.username (tab) user.privilege
+
+      DISPLAY menu options to user:
+        1. Add address
+        2. Remove address
+        0. Return to main menu
+
+      WHILE option NOT 0:
+        option = USER INPUT
+        SWITCH option:
+          CASE 1:
+            newUsername = USER INPUT
+            newPassword = USER INPUT
+            newPrivilege = USER INPUT
+            arrUsers[].username = newUsername
+            arrUsers[].password = newPassword
+            arrUsers[].privilege = newPrivilege
+            RETURN
+          CASE 2:
+            int userIndex = USER INPUT
+            REMOVE arrUsers[addressIndex]
+            RETURN
+          CASE 0:
+            EXIT
+          DEFAULT:
+            DISPLAY "Invalid selection, try again."
+            RETURN
+      RETURN
+
+    CASE 5:
+      IF privilege NOT 0:
+        DISPLAY "Insufficient privileges
+        RETURN
+
+      //user must confirm system reset by entering a displayed randomly generated number
+      int randNum = random number between 1000000 and 9999999
+      int userNum = USER INPUT
+      IF userNum NOT EQUAL randNum:
+        OUTPUT "Confirmation PINs do not match"
         EXIT
+      ELSE:
+        OVERWRITE "users.txt" and leave empty
+        OVERWRITE "addresses.txt and leave empty
+        END PROGRAM
+      
+      
+      
   OVERWRITE arrUsers to "users.txt"
   OVERWRITE arrStaticAddresses to "addresses.txt"
   
-
-  
-
-
-
-
-
