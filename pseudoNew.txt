@@ -202,8 +202,7 @@ WHILE mainOption NOT 0:
         OVERWRITE "addresses.txt and leave empty
         END PROGRAM
       
-      
-      
-  OVERWRITE arrUsers to "users.txt"
-  OVERWRITE arrStaticAddresses to "addresses.txt"
+//save changes made during program runtime
+OVERWRITE arrUsers to "users.txt"
+OVERWRITE arrStaticAddresses to "addresses.txt"
   
