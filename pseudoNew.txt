@@ -22,6 +22,14 @@ isFirstStartup = READ line 1 of "startup.conf"
 dnsServer = READ line 2 of "startup.conf"
 dhcpServer = Read line 3 of "startup.conf"
 
+//for loop to get saved users from txt file
+FOR line IN "users.txt"
+  arrUsers[index of corresponding line] = get line of "users.txt"
+FOR line IN "addresses.txt"
+  arrStaticAddresses[index of corresponding line] = get line of "addresses.txt"
+
+//login process starts
+string currentUser
 IF NOT isFirstStartup:
   username = USER INPUT
   password = USER INPUT
@@ -29,26 +37,122 @@ IF NOT isFirstStartup:
   FOR each user in arrUsers:
     IF user.username == username AND user.password == password:
       privilege = user.privilege
+      currentUser = user.username
       BREAK for-loop
     //if a match could not be found
     END PROGRAM
 ELSE:
-  //if it is the first run of the program the setup process will begin
+  //setup process starts
   adminPassword = USER INPUT
+
   //create entry for admin in arrUsers
   arrUsers[0].username = "admin"
   arrUsers[0].password = adminPassword
   arrUsers[0].privilege = 0    //0 is the highest privilege level
+
   //receive server addresses from user
   dnsServer = USER INPUT
   validate IP address entered and re-enter if invalid
   dhcpServer = USER INPUT
   validate IP address entered and re-enter if invalid
+
   //save values of server IPs to startup.conf file
   WRITE FILE "startup.conf" line 2 = dnsServer
   WRITE FILE "startup.conf" line 3 = dhcpServer
 
   privilege = 0
+  string currentUser = "admin"
+
+//now the login/setup processes are complete
+//the menu will appear with the name of the logged in user
+INITIALIZE int mainOption
+WHILE mainOption NOT 0:
+  DISPLAY currentUser
+  DISPLAY menu options
+    1. Static Addresses
+    2. DNS Server
+    3. DHCP Server
+    ADMIN ONLY OPTIONS
+    4. User Management
+    5. Reset Router
+
+  menuOption = USER INPUT
+
+  SWITCH menuOption:
+    CASE 1:
+      //display all current users
+      int index = 0
+      int option
+      FOR user IN arrUsers:
+        DISPLAY index+1 (tab) user.username (tab) user.privilege
+
+      DISPLAY menu options to user:
+        1. Add address
+        2. Remove address
+        0. Return to main menu
+
+      WHILE option NOT 0:
+        option = USER INPUT
+        SWITCH option:
+          CASE 1:
+            newAddress = USER INPUT
+            arrStaticAddresses[] = newAddress
+            RETURN
+          CASE 2:
+            int addressIndex = USER INPUT
+            REMOVE arrStaticAddress[addressIndex]
+            RETURN
+          CASE 0:
+            EXIT
+          DEFAULT:
+            DISPLAY "Invalid selection, try again."
+            RETURN
+      RETURN
+
+    CASE 2:
+      DISPLAY dnsServer
+      DISPLAY options to user:
+        1. Change server address
+        0. Return to main menu
+
+      int option = USER INPUT
+      SWITCH option:
+        CASE 1:
+          string newAddress = USER INPUT
+          dnsServer = newAddress
+          RETURN  
+        CASE 0:
+          BREAK
+        DEFAULT:
+          DISPLAY "Invalid selection, try again."
+          RETURN
+      REUTRN
+
+      CASE 3:
+        DISPLAY dhcpServer
+        DISPLAY options to user:
+          1. Change server address
+          0. Return to main menu
+  
+        int option = USER INPUT
+        SWITCH option:
+          CASE 1:
+            string newAddress = USER INPUT
+            dhcpServer = newAddress
+            RETURN  
+          CASE 0:
+            BREAK
+          DEFAULT:
+            DISPLAY "Invalid selection, try again."
+            RETURN
+      RETURN
+
+    CASE 4:
+      IF privilege NOT 0:
+        DISPLAY "Insufficient privileges
+        EXIT
+  OVERWRITE arrUsers to "users.txt"
+  OVERWRITE arrStaticAddresses to "addresses.txt"
   
 
   
