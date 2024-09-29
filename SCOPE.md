@@ -1,5 +1,5 @@
 # Router Simulator Scope
-This project aims to recreate the interface of a router cli and will be written in C++.
+This project aims to recreate the interface of a router cli using methods and best practice both learned during participation in CMPG121 and while researching approaches required by the project brief.
 
 ### The following functions of a typical network router will be replicated
 - Basic user management
