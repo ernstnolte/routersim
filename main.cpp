@@ -23,7 +23,7 @@ void staticAddress_menu();
 void dns_menu();
 void dhcp_menu();
 void user_management();
-bool reset_system();
+bool reset_system();                //complete
 
 int main()
 {
