@@ -23,7 +23,7 @@ void staticAddress_menu();
 void dns_menu();
 void dhcp_menu();
 void user_management();
-void reset_system();
+bool reset_system();
 
 int main()
 {
@@ -66,7 +66,8 @@ bool read_files(User arrUsers, string arrAddresses)
     {
         inFile >> confString;
 
-        isFirstStarup = (confString == "true") ? true : false;
+        //will set isFirstStartup to false if the condition is false
+        isFirstStarup = (confString == "true");
 
         if (isFirstStarup)
         {
@@ -246,7 +247,6 @@ void first_startup()
     cout << "Initial Setup Screen" << endl;
 }
 
-
 /*this function displays the menu options to the user
      *and handles their choice using a switch-case
      *each case leads to a defined function and returns back to a while loop*/
@@ -301,9 +301,19 @@ void main_menu()
                 break;
             case 5:
                 //declare a string that will change the value inside the conf file
-                reset_system();
+                //reset_system();
 
-                break;
+                //exit the menu and program if the function returns true
+                if (reset_system())
+                {
+                    option = 0;
+                }
+                //return to main menu if the function returns false
+                else
+                {
+                    break;
+                }
+
             default:
                 printf("!! Please select a valid option !!\n");
                 break;
@@ -334,7 +344,7 @@ void user_management()
 
 //this function allows the user to reset the router
 //done by overwriting both txt files and setting the conf file contents to default values
-void reset_system()
+bool reset_system()
 {
     int option;
     cout << "Are you sure you want to reset the system?" << endl
@@ -345,12 +355,14 @@ void reset_system()
     //clears the screen
     system("cls");
 
+
     //switch to handle user option
     switch (option)
     {
         //if the user chooses to reset the system they will have to confirm
         //their choice by repeating a randomly generated 7 digit integer
         case 1:
+        {
             int randNum, compareNum;
             cout << "Confirm by entering the 7 digit pin shown below:" << endl;
             randNum = 1000000 + (rand()% 9000000);
@@ -360,22 +372,28 @@ void reset_system()
             if (compareNum != randNum)
             {
                 cout << "The pin you provided does not match. Returning to the main menu." << endl;
-                break;
+                return false;
+            }
+            else
+            {
+                //change the value of the startup.conf file and return string true
+                string confFile {"startup.conf"};
+                ofstream outFile {confFile};
+                outFile << "true";
+                return true;
             }
 
-        //change the value of the startup.conf file
-            string confFile {"startup.conf"};
-            ofstream outFile {confFile};
-            outFile << "false";
-            break;
-        //if the user changes their mind they can choose to exit this menu by typing 0
+
+        }
+
+            //if the user changes their mind they can choose to exit this menu by typing 0
         case 0:
             break;
         default:
             cout << "Invalid selection, please try again: ";
-            return;
+            break;
     }
-    system("cls");
 
-    return "false";
+    //clear the screen
+    system("cls");
 }
