@@ -260,20 +260,20 @@ void main_menu()
     {
         //below code prints out the interface of the router cli and the menu options
         printf("--------------------------------------------------------------------------\n"
-               "                              Router Simulator                            \n"
-               "--------------------------------------------------------------------------\n\n"
+            "                              Router Simulator                            \n"
+            "--------------------------------------------------------------------------\n\n"
 
-               "Network Settings\n"
-               "  1. DNS Server\n"
-               "  2. DHCP Server\n"
-               "  3. Static Addresses\n\n"
+            "Network Settings\n"
+            "  1. DNS Server\n"
+            "  2. DHCP Server\n"
+            "  3. Static Addresses\n\n"
 
-               "ADMIN ONLY\n"
-               "  4. User Management\n"
-               "  5. Reset Router\n\n"
+            "ADMIN ONLY\n"
+            "  4. User Management\n"
+            "  5. Reset Router\n\n"
 
-               "0 TO EXIT\n"
-               "--------------------------------------------------------------------------\n\n");
+            "0 TO EXIT\n"
+            "--------------------------------------------------------------------------\n\n");
 
         //get input from user using cout and cin
         cout << "Enter menu option: ";
@@ -327,7 +327,8 @@ void dhcp_menu()
 
 }
 
-void user_management() {
+void user_management()
+{
 
 }
 
@@ -337,8 +338,8 @@ void reset_system()
 {
     int option;
     cout << "Are you sure you want to reset the system?" << endl
-         << "1. Reset system" << endl
-         << "0. Return to main menu" << endl;
+            << "1. Reset system" << endl
+            << "0. Return to main menu" << endl;
     cin >> option;
 
     //clears the screen
@@ -362,7 +363,7 @@ void reset_system()
                 break;
             }
 
-            //change the value of the startup.conf file
+        //change the value of the startup.conf file
             string confFile {"startup.conf"};
             ofstream outFile {confFile};
             outFile << "false";
@@ -372,7 +373,7 @@ void reset_system()
             break;
         default:
             cout << "Invalid selection, please try again: ";
-        return;
+            return;
     }
     system("cls");
 
