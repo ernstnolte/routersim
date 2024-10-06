@@ -16,9 +16,9 @@ bool valid_router();                //complete
 bool in_range();                    //complete
 bool valid_password();              //complete
 void add_user();
-void first_startup();
+int first_startup();
 int user_login();
-void main_menu();
+void main_menu(const int &privilege);
 void staticAddress_menu();
 void dns_menu();
 void dhcp_menu();
@@ -27,6 +27,7 @@ bool reset_system();                //complete
 
 int main()
 {
+    int privilege = 0;
     //declare an array to store users
     User arrUsers[100];
     //declare array to store static ip addresses
@@ -37,11 +38,15 @@ int main()
     //if the conf file does not exist of contains true the first startup function will be called
     if (isFirstStartup)
     {
-        first_startup();
+        privilege = first_startup();
+    }
+    else
+    {
+        privilege = user_login();
     }
 
     //will run after first startup or if the program is opened again
-    main_menu();
+    main_menu(privilege);
     return 0;
 }
 
@@ -209,8 +214,11 @@ bool valid_password(const string &password)
     return hasUpper && hasLower && hasDigit && hasSpecial && (password.length() >= 8);
 }
 
-void add_user(User arrUsers[])
+void add_user(User* arrUsers)
 {
+    //get num entries in user array
+    int n = sizeof(arrUsers) / sizeof(arrUsers[0]);
+    
     //init variables the user will enter
     string username, password, cPassword;
     int permission;
@@ -242,15 +250,16 @@ void add_user(User arrUsers[])
 
 }
 
-void first_startup()
+int first_startup()
 {
     cout << "Initial Setup Screen" << endl;
+    return 0;
 }
 
 /*this function displays the menu options to the user
      *and handles their choice using a switch-case
      *each case leads to a defined function and returns back to a while loop*/
-void main_menu()
+void main_menu(const int &privilege)
 {
     //declare user option
     int option;
@@ -300,19 +309,17 @@ void main_menu()
                 user_management();
                 break;
             case 5:
-                //declare a string that will change the value inside the conf file
-                //reset_system();
-
                 //exit the menu and program if the function returns true
-                if (reset_system())
+                if (privilege == 0)
                 {
+                    reset_system();
                     option = 0;
                 }
-                //return to main menu if the function returns false
                 else
                 {
-                    break;
+                    cout << "Error: Access denied." << endl;
                 }
+                break;
 
             default:
                 printf("!! Please select a valid option !!\n");
@@ -355,45 +362,47 @@ bool reset_system()
     //clears the screen
     system("cls");
 
-
-    //switch to handle user option
-    switch (option)
+    do
     {
-        //if the user chooses to reset the system they will have to confirm
-        //their choice by repeating a randomly generated 7 digit integer
-        case 1:
+        //switch to handle user option
+        switch (option)
         {
-            int randNum, compareNum;
-            cout << "Confirm by entering the 7 digit pin shown below:" << endl;
-            randNum = 1000000 + (rand()% 9000000);
-            cout << randNum << " : ";
-            cin >> compareNum;
-
-            if (compareNum != randNum)
+            //if the user chooses to reset the system they will have to confirm
+            //their choice by repeating a randomly generated 7 digit integer
+            case 1:
             {
-                cout << "The pin you provided does not match. Returning to the main menu." << endl;
+                int randNum, compareNum;
+                cout << "Confirm by entering the 7 digit pin shown below:" << endl;
+                randNum = 1000000 + (rand()% 9000000);
+                cout << randNum << " : ";
+                cin >> compareNum;
+    
+                if (compareNum != randNum)
+                {
+                    cout << "The pin you provided does not match. Returning to the main menu." << endl;
+                    return false;
+                }
+                else
+                {
+                    //change the value of the startup.conf file and return string true
+                    string confFile {"startup.conf"};
+                    ofstream outFile {confFile};
+                    outFile << "true";
+                    return true;
+                }
+    
+    
+            }
+    
+                //if the user changes their mind they can choose to exit this menu by typing 0
+            case 0:
                 return false;
-            }
-            else
-            {
-                //change the value of the startup.conf file and return string true
-                string confFile {"startup.conf"};
-                ofstream outFile {confFile};
-                outFile << "true";
-                return true;
-            }
-
-
+            default:
+                cout << "Invalid selection, please try again: ";
+                
         }
-
-            //if the user changes their mind they can choose to exit this menu by typing 0
-        case 0:
-            break;
-        default:
-            cout << "Invalid selection, please try again: ";
-            break;
-    }
-
+    } while (option != 0);
     //clear the screen
     system("cls");
+    return false;
 }
