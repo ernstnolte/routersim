@@ -1,56 +1,19 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <time.h>
 
 using namespace std;
 
 //this struct will define the format of a given user
 class User {
+    public:
     string username;
     string password;
     int privilege;
 };
 
-bool read_files(User arrUsers, string arrAddresses);
-bool valid_router();                //complete
-bool in_range();                    //complete
-bool valid_password();              //complete
-void add_user();
-int first_startup();
-int user_login();
-void main_menu(const int &privilege);
-void staticAddress_menu();
-void dns_menu();
-void dhcp_menu();
-void user_management();
-bool reset_system();                //complete
-
-int main()
-{
-    int privilege = 0;
-    //declare an array to store users
-    User arrUsers[100];
-    //declare array to store static ip addresses
-    string arrAddresses[254];
-    //call the read_conf function to get the first startup variable
-    bool isFirstStartup = read_files(*arrUsers, *arrAddresses);
-
-    //if the conf file does not exist of contains true the first startup function will be called
-    if (isFirstStartup)
-    {
-        privilege = first_startup();
-    }
-    else
-    {
-        privilege = user_login();
-    }
-
-    //will run after first startup or if the program is opened again
-    main_menu(privilege);
-    return 0;
-}
-
-bool read_files(User arrUsers, string arrAddresses)
+bool read_files(User arrUsers[], const string arrAddresses[])
 {
     //init first startup bool and declare as true
     bool isFirstStarup = true;
@@ -86,9 +49,43 @@ bool read_files(User arrUsers, string arrAddresses)
     ofstream outFile {"users.txt"};
     outFile << "username" << ", password" << ", permission" << endl;
 
+    //close files
+    inFile.close();
+    outFile.close();
+
     //return the value read from the conf file
     //if the text value is true it will return true, if it's false it will return false
     return isFirstStarup;
+}
+
+//gets users from users.txt and adds to arrUsers object
+void get_users(User arrUsers[], int& numUsers) {
+    //declare filename
+    string filename = "users.txt";
+
+    ifstream inFile(filename);
+    if (!inFile.is_open()) {
+        cout << "Error opening file.";
+        return;
+    }
+
+    for (int i = 0; i < numUsers; ++i) {
+        User user;
+        string line;
+        if (getline(inFile, line)) {
+            istringstream iss(line);
+            if (!(iss >> user.username >> user.password >> user.privilege)) {
+                cerr << "Error parsing line: " << line << '\n';
+                continue;
+            }
+            arrUsers[i] = user;
+        } else {
+            std::cerr << "Unexpected end of file.\n";
+            break;
+        }
+    }
+
+    inFile.close();
 }
 
 bool valid_router(const string &ipAddress)
@@ -214,39 +211,63 @@ bool valid_password(const string &password)
     return hasUpper && hasLower && hasDigit && hasSpecial && (password.length() >= 8);
 }
 
-void add_user(User* arrUsers)
-{
-    //get num entries in user array
-    int n = sizeof(arrUsers) / sizeof(arrUsers[0]);
-    
+void add_user(User*& arrUsers, int& numUsers) {
     //init variables the user will enter
     string username, password, cPassword;
-    int permission;
+    int privilege;
 
     //input username
     cout << "Username: ";
     cin >> username;
-    //input and password
+
+    //input password
     cout << "Password: ";
     cin >> password;
-    while (!valid_password(password))
-    {
+
+    //validate password
+    while (!valid_password(password)) {
         cout << "Password does not meet minimum requirements. Enter again: ";
         cin >> password;
     }
+
     //confirm password
     cout << "Confirm password: ";
     cin >> cPassword;
-    while (cPassword != password)
-    {
+    while (cPassword != password) {
         cout << "Passwords do not match. Enter again: ";
         cin >> cPassword;
     }
 
-    //add user information to array
+    //input permission level
+    do {
+        cout << "Permission level for user " << username << " (0, 1): ";
+        cin >> privilege;
 
+        if (privilege != 0 && privilege != 1) {
+            cout << "Error: Invalid value for permission level." << endl;
+        }
+    } while (privilege != 0 && privilege != 1);
 
+    //dynamically allocate new array of users
+    User* newUsers = new User[numUsers + 1];
 
+    //copy existing users to the new array
+    for (int i = 0; i < numUsers; i++) {
+        newUsers[i] = arrUsers[i];
+    }
+
+    //add the new user
+    newUsers[numUsers].username = username;
+    newUsers[numUsers].password = password;
+    newUsers[numUsers].privilege = privilege;
+
+    //update the array pointer and the user count
+    arrUsers = newUsers;
+    numUsers++;  //increment the user count
+}
+
+void remove_user(User*& arrUsers, int& numUsers)
+{
 
 }
 
@@ -256,13 +277,154 @@ int first_startup()
     return 0;
 }
 
-/*this function displays the menu options to the user
-     *and handles their choice using a switch-case
-     *each case leads to a defined function and returns back to a while loop*/
-void main_menu(const int &privilege)
+int user_login()
 {
-    //declare user option
+    return 0;
+}
+
+void staticAddress_menu()
+{
+
+}
+
+void dns_menu()
+{
+
+}
+
+void dhcp_menu()
+{
+
+}
+
+void user_management(User arrUsers[], int& numUsers)
+{
+    int option = 0;
+
+    do
+    {
+        //table headings
+        cout << left << setw(5) << "No." << setw(25) << "Username" << setw(15) << "Privilege" << endl;
+
+        //for loop loops through user array and displays users
+        for (int i = 0; i < numUsers; i++)
+        {
+            cout << left << setw(5) << i+1 << setw(25) << arrUsers[i].username << setw(15) << arrUsers[i].privilege << endl;
+        }
+
+        //display options to user
+        cout << "1. Add user" << endl
+             << "2. Remover user" << endl
+             << "0. Return to main menu" << endl;
+        cout << endl << "Enter option: ";
+        cin >> option;
+
+        switch (option)
+        {
+            case 1:
+                add_user(arrUsers, numUsers);
+                break;
+            case 2:
+                remove_user(arrUsers, numUsers);
+                break;
+            case 0:
+                break;
+            default:
+                cout << "Error: Invalid option." << endl;
+
+        }
+
+    } while (option != 0);
+
+    //clear the screen
+    system("cls");
+}
+
+
+//this function allows the user to reset the router
+//done by overwriting both txt files and setting the conf file contents to default values
+bool reset_system()
+{
     int option;
+    cout << "Are you sure you want to reset the system?" << endl
+            << "1. Reset system" << endl
+            << "0. Return to main menu" << endl;
+    cin >> option;
+
+    //clears the screen
+    system("cls");
+
+    do
+    {
+        //switch to handle user option
+        switch (option)
+        {
+            //if the user chooses to reset the system they will have to confirm
+            //their choice by repeating a randomly generated 7 digit integer
+            case 1:
+            {
+                int randNum, compareNum;
+                cout << "Confirm by entering the 7 digit pin shown below:" << endl;
+                randNum = 1000000 + (rand()% 9000000);
+                cout << randNum << " : ";
+                cin >> compareNum;
+
+                if (compareNum != randNum)
+                {
+                    cout << "The pin you provided does not match. Returning to the main menu." << endl;
+                    return false;
+                }
+                else
+                {
+                    //change the value of the startup.conf file and return string true
+                    string confFile {"startup.conf"};
+                    ofstream outFile {confFile};
+                    outFile << "true";
+                    return true;
+                }
+
+
+            }
+
+                //if the user changes their mind they can choose to exit this menu by typing 0
+            case 0:
+                return false;
+            default:
+                cout << "Invalid selection, please try again: ";
+
+        }
+    } while (option != 0);
+    //clear the screen
+    system("cls");
+    return false;
+}
+
+int main()
+{
+    //set seed for random generation
+    srand(time(0));
+
+    //declare arrays to store users and ip addresses
+    User arrUsers[100];
+    string arrAddresses[254];
+    int privilege = 0;
+
+    //call the read_conf function to get the first startup variable
+    bool isFirstStartup = read_files(arrUsers, arrAddresses);
+
+    //if the conf file does not exist of contains true the first startup function will be called
+    if (isFirstStartup)
+    {
+        privilege = first_startup();
+    }
+    else
+    {
+        privilege = user_login();
+    }
+
+    //main menu
+    //declare user option
+    int option, numUsers, numAddresses;
 
     //post-test loop to handle returns to the main menu and exit condition
     do
@@ -306,7 +468,7 @@ void main_menu(const int &privilege)
                 staticAddress_menu();
                 break;
             case 4:
-                user_management();
+                user_management(arrUsers, numUsers);
                 break;
             case 5:
                 //exit the menu and program if the function returns true
@@ -327,82 +489,5 @@ void main_menu(const int &privilege)
         }
     }while (option != 0);
 
-}
-
-void staticAddress_menu()
-{
-
-}
-
-void dns_menu()
-{
-
-}
-
-void dhcp_menu()
-{
-
-}
-
-void user_management()
-{
-
-}
-
-//this function allows the user to reset the router
-//done by overwriting both txt files and setting the conf file contents to default values
-bool reset_system()
-{
-    int option;
-    cout << "Are you sure you want to reset the system?" << endl
-            << "1. Reset system" << endl
-            << "0. Return to main menu" << endl;
-    cin >> option;
-
-    //clears the screen
-    system("cls");
-
-    do
-    {
-        //switch to handle user option
-        switch (option)
-        {
-            //if the user chooses to reset the system they will have to confirm
-            //their choice by repeating a randomly generated 7 digit integer
-            case 1:
-            {
-                int randNum, compareNum;
-                cout << "Confirm by entering the 7 digit pin shown below:" << endl;
-                randNum = 1000000 + (rand()% 9000000);
-                cout << randNum << " : ";
-                cin >> compareNum;
-    
-                if (compareNum != randNum)
-                {
-                    cout << "The pin you provided does not match. Returning to the main menu." << endl;
-                    return false;
-                }
-                else
-                {
-                    //change the value of the startup.conf file and return string true
-                    string confFile {"startup.conf"};
-                    ofstream outFile {confFile};
-                    outFile << "true";
-                    return true;
-                }
-    
-    
-            }
-    
-                //if the user changes their mind they can choose to exit this menu by typing 0
-            case 0:
-                return false;
-            default:
-                cout << "Invalid selection, please try again: ";
-                
-        }
-    } while (option != 0);
-    //clear the screen
-    system("cls");
-    return false;
+    return 0;
 }
