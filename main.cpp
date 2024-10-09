@@ -13,10 +13,10 @@ class User {
     int privilege;
 };
 
-bool read_files(User arrUsers[], const string arrAddresses[])
+bool read_files(User arrUsers[], int &numUsers, string arrAddresses[], int &numAddresses)
 {
     //init first startup bool and declare as true
-    bool isFirstStarup = true;
+    bool isFirstStartup = true;
 
     //checks if the startup config file exists and creates it if it doesnt
     string confFile {"startup.conf"};
@@ -27,7 +27,7 @@ bool read_files(User arrUsers[], const string arrAddresses[])
     {
         ofstream outFile {confFile};
         outFile << "false";
-        isFirstStarup = true;
+        isFirstStartup = true;
     }
     //if it does exist, we get the value of the first line that defines the value for a bool isFirstStartup
     else
@@ -35,9 +35,9 @@ bool read_files(User arrUsers[], const string arrAddresses[])
         inFile >> confString;
 
         //will set isFirstStartup to false if the condition is false
-        isFirstStarup = (confString == "true");
+        isFirstStartup = (confString == "true");
 
-        if (isFirstStarup)
+        if (isFirstStartup)
         {
             ofstream outFile {confFile};    //overwrite conf file after bool value was received
             outFile << "false";             //change the conf file's contents to false
@@ -46,16 +46,61 @@ bool read_files(User arrUsers[], const string arrAddresses[])
     }
 
     //create the users.txt file that stores added users and add them to an array defined by the User class
-    ofstream outFile {"users.txt"};
-    outFile << "username" << ", password" << ", permission" << endl;
+    ifstream inUsers {"users.txt"};
+    ifstream inAddresses {"addresses.txt"};
+    string userString, ipString;
 
-    //close files
+    //read contents of user.txt and add them to arrUsers array if file is accessible
+    if (!inUsers.is_open())
+    {
+        cout << "users.txt could not be opened. Previously created users will not be displayed." << endl;
+    }
+    else
+    {
+        //get user details per line using getline method
+        for(int i = 0; getline(inUsers, userString); i++)
+        {
+            stringstream ss(userString);
+            string privilegeString;
+
+            //fetch each value of user details and store in array
+            //!!privilege is incompattible with with array and is converted after fetching
+            getline(ss, arrUsers[i].username, ',');
+            getline(ss, arrUsers[i].password, ',');
+            getline(ss, privilegeString);
+
+            //converts privilege received from file to int and store in array
+            arrUsers[i].privilege = stoi(privilegeString);
+            //increase number of users with 1
+            numUsers++;
+        }
+        inUsers.close();
+    }
+    //read contents of addresses.txt and add them to arrAddresses if file is accessible
+    if (!inAddresses.is_open())
+    {
+        cout << "addresses.txt could not be opened. Previously configured static addresses will not be displayed" << endl;
+    }
+    else
+    {
+        for(int i = 0; getline(inAddresses, ipString); i++)
+        {
+            arrAddresses[i] = ipString;
+            //increase number of addresses with 1
+            numAddresses++;
+        }
+
+        inAddresses.close();
+    }
+
+
+
+    //close file
     inFile.close();
-    outFile.close();
 
     //return the value read from the conf file
     //if the text value is true it will return true, if it's false it will return false
-    return isFirstStarup;
+    return isFirstStartup;
 }
 
 //gets users from users.txt and adds to arrUsers object
@@ -182,7 +227,7 @@ bool valid_password(const string &password)
      * must be at least 8 characters long    */
 
     //specify the special character and initialaze the condition booleans
-    const string specialChars = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+    const string specialChars = "!@#$%^&*()-_=+[]{}|;:.<>?";
     bool hasUpper, hasLower, hasDigit, hasSpecial;
 
     //check if the password string contains all requirements and changes bools accordingly
@@ -213,57 +258,7 @@ bool valid_password(const string &password)
 
 void add_user(User*& arrUsers, int& numUsers) {
     //init variables the user will enter
-    string username, password, cPassword;
-    int privilege;
 
-    //input username
-    cout << "Username: ";
-    cin >> username;
-
-    //input password
-    cout << "Password: ";
-    cin >> password;
-
-    //validate password
-    while (!valid_password(password)) {
-        cout << "Password does not meet minimum requirements. Enter again: ";
-        cin >> password;
-    }
-
-    //confirm password
-    cout << "Confirm password: ";
-    cin >> cPassword;
-    while (cPassword != password) {
-        cout << "Passwords do not match. Enter again: ";
-        cin >> cPassword;
-    }
-
-    //input permission level
-    do {
-        cout << "Permission level for user " << username << " (0, 1): ";
-        cin >> privilege;
-
-        if (privilege != 0 && privilege != 1) {
-            cout << "Error: Invalid value for permission level." << endl;
-        }
-    } while (privilege != 0 && privilege != 1);
-
-    //dynamically allocate new array of users
-    User* newUsers = new User[numUsers + 1];
-
-    //copy existing users to the new array
-    for (int i = 0; i < numUsers; i++) {
-        newUsers[i] = arrUsers[i];
-    }
-
-    //add the new user
-    newUsers[numUsers].username = username;
-    newUsers[numUsers].password = password;
-    newUsers[numUsers].privilege = privilege;
-
-    //update the array pointer and the user count
-    arrUsers = newUsers;
-    numUsers++;  //increment the user count
 }
 
 void remove_user(User*& arrUsers, int& numUsers)
@@ -299,7 +294,8 @@ void dhcp_menu()
 
 void user_management(User arrUsers[], int& numUsers)
 {
-    int option = 0;
+    int menuChoice = 0;
+    User* pUsers = arrUsers;
 
     do
     {
@@ -317,29 +313,76 @@ void user_management(User arrUsers[], int& numUsers)
              << "2. Remover user" << endl
              << "0. Return to main menu" << endl;
         cout << endl << "Enter option: ";
-        cin >> option;
+        cin >> menuChoice;
 
-        switch (option)
+        if (menuChoice == 1)
         {
-            case 1:
-                add_user(arrUsers, numUsers);
-                break;
-            case 2:
-                remove_user(arrUsers, numUsers);
-                break;
-            case 0:
-                break;
-            default:
-                cout << "Error: Invalid option." << endl;
+            //init user variables
+            string username, password, cPassword;
+            int privilege;
 
+            //input username
+            cout << "Username: ";
+            cin >> username;
+
+            //input password
+            cout << "Password: ";
+            cin >> password;
+
+            //validate password
+            while (!valid_password(password)) {
+                cout << "Password does not meet minimum requirements. Enter again: ";
+                cin >> password;
+            }
+
+            //confirm password
+            cout << "Confirm password: ";
+            cin >> cPassword;
+            while (cPassword != password) {
+                cout << "Passwords do not match. Enter again: ";
+                cin >> cPassword;
+            }
+
+            //input permission level
+            do {
+                cout << "Permission level for user " << username << " (0, 1): ";
+                cin >> privilege;
+
+                if (privilege != 0 && privilege != 1) {
+                    cout << "Error: Invalid value for permission level." << endl;
+                }
+            } while (privilege != 0 && privilege != 1);
+
+            //add the new user
+            arrUsers[numUsers].username = username;
+            arrUsers[numUsers].password = password;
+            arrUsers[numUsers].privilege = privilege;
+
+            //increment the user count
+            numUsers++;
+        }
+        else if (menuChoice == 2)
+        {
+            //remove a user
+            break;
+        }
+        else if (menuChoice == 0)
+        {
+            break;
+        }
+        else
+        {
+            cout << "Error: Invalid option." << endl;
         }
 
-    } while (option != 0);
+        //clear the screen
+        system("cls");
+
+    } while (menuChoice != 0);
 
     //clear the screen
     system("cls");
 }
-
 
 //this function allows the user to reset the router
 //done by overwriting both txt files and setting the conf file contents to default values
@@ -399,6 +442,29 @@ bool reset_system()
     return false;
 }
 
+void save_files(const User arrUsers[], const int& numUsers,string arrAddresses[], const int& numAddresses)
+{
+    //open txt files for saving
+    ofstream outUsers {"users.txt"};
+    ofstream outAddresses {"addresses.txt"};
+
+    //write users to users.txt
+    for (int i = 0; i < numUsers; i++)
+    {
+        outUsers << arrUsers[i].username << "," << arrUsers[i].password << "," << arrUsers[i].privilege << endl;
+    }
+
+    //write ip addresses to addresses.txt
+    for (int i = 0; i < numAddresses; i++)
+    {
+        outAddresses << arrAddresses[i] << endl;
+    }
+
+    //close the files that where written to
+    outUsers.close();
+    outAddresses.close();
+}
+
 int main()
 {
     //set seed for random generation
@@ -407,24 +473,24 @@ int main()
     //declare arrays to store users and ip addresses
     User arrUsers[100];
     string arrAddresses[254];
-    int privilege = 0;
+    int privilege = 0, numUsers = 0, numAddresses = 0;
 
     //call the read_conf function to get the first startup variable
-    bool isFirstStartup = read_files(arrUsers, arrAddresses);
+    bool isFirstStartup = read_files(arrUsers, numUsers, arrAddresses, numAddresses);
 
     //if the conf file does not exist of contains true the first startup function will be called
-    if (isFirstStartup)
+    if (!isFirstStartup)
     {
-        privilege = first_startup();
+        privilege = user_login();
     }
     else
     {
-        privilege = user_login();
+        privilege = first_startup();
     }
 
     //main menu
     //declare user option
-    int option, numUsers, numAddresses;
+    int option;
 
     //post-test loop to handle returns to the main menu and exit condition
     do
@@ -482,12 +548,14 @@ int main()
                     cout << "Error: Access denied." << endl;
                 }
                 break;
-
             default:
                 printf("!! Please select a valid option !!\n");
                 break;
         }
     }while (option != 0);
+
+    //save user and ip address files
+    save_files(arrUsers, numUsers, arrAddresses, numAddresses);
 
     return 0;
 }
