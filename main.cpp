@@ -1,7 +1,8 @@
+//43769780 EH Nolte
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <time.h>
+#include <ctime>
 
 using namespace std;
 
@@ -108,8 +109,7 @@ public:
         return isFirstStartup;
     }
 
-    void save_files(const User arrUsers[], const int& numUsers,string arrAddresses[], const int& numAddresses,
-                const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
+    void save_files(const User arrUsers[], const int& numUsers,string arrAddresses[], const int& numAddresses, const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
     {
         //open txt files for saving
         ofstream outConf {"startup.conf"};
@@ -171,49 +171,7 @@ void get_users(User arrUsers[], int& numUsers) {
     inFile.close();
 }
 
-bool valid_router(const string &ipAddress)
-{
-    /*initializes a stream and array that will be used to
-     *compactly process and store the blocks of the given ip address*/
-    stringstream ss(ipAddress);
-    string block, blocks[4];
-
-    //count the number of delimiters to determine of the ip address is valid
-    // (ip addresses have 4 blocks, ie 3 delimiters
-    int numSeps = 0;
-    for (char ch : ipAddress)
-    {
-        if (ch == '.')
-        {
-            numSeps++;
-        }
-    }
-    if (numSeps != 3)
-    {
-        return false;
-    }
-
-    //initialize index variable to determine blocks of ip address
-    int index = 0;
-    while (getline(ss, block, '.') && index < 4)
-    {
-        blocks[index] = block;
-        index++;
-    }
-
-    //convert each block to an integer and check if it is less 255 (max value for an ip address block)
-    for (int i = 0; i < 4; i++)
-    {
-        if (stoi(blocks[i]) > 255)
-        {
-            return false;
-        }
-    }
-
-    //if all conditions are met the ip address is valid
-    return true;
-}
-
+//checks if a given ip address is within the range of the ipv4 subnet
 bool in_range(const string &ipAddress, const string &routerAddress)
 {
     //initialize a stream and array for both addresses
@@ -255,6 +213,7 @@ bool in_range(const string &ipAddress, const string &routerAddress)
     return true;
 }
 
+//checks if a given password meets complexity requirements
 bool valid_password(const string &password)
 {
     /* the password must have the following:
@@ -269,7 +228,7 @@ bool valid_password(const string &password)
     bool hasUpper, hasLower, hasDigit, hasSpecial;
 
     //check if the password string contains all requirements and changes bools accordingly
-    for (char ch : password)
+    for (const char ch : password)
     {
         if (isupper(ch))
         {
@@ -283,6 +242,7 @@ bool valid_password(const string &password)
         {
             hasDigit = true;
         }
+        //checks if the char is a special character defined by a string specialChars
         if (specialChars.find(ch) != string::npos)
         {
             hasSpecial = true;
@@ -294,7 +254,8 @@ bool valid_password(const string &password)
     return hasUpper && hasLower && hasDigit && hasSpecial && (password.length() >= 8);
 }
 
-int first_startup(User arrUsers[], int& numUsers, string& dnsServer, string& dhcpServer)
+//gets router and user settings from user
+int user_setup(User arrUsers[], int& numUsers, string& dnsServer, string& dhcpServer)
 {
     cout << "--------------------------------------------------------------------------" << endl;
     cout << "|           Initial Setup         |       Router Address: " << ROUTER_ADDRESS << "    |" << endl;
@@ -590,7 +551,7 @@ void serverAddress_menu(const string& concatString, string& address)
     system("cls");
 }
 
-void user_management(User arrUsers[], int& numUsers)
+void userManagement_menu(User arrUsers[], int& numUsers)
 {
     int menuChoice = 0;
     User* pUsers = arrUsers;
@@ -714,7 +675,7 @@ void user_management(User arrUsers[], int& numUsers)
 
 //this function allows the user to reset the router
 //done by overwriting all txt files and setting the conf file contents to default values
-bool reset_system()
+bool systemReset_menu()
 {
     int option;
     cout << "Are you sure you want to reset the system?" << endl
@@ -782,25 +743,25 @@ int main()
     //set seed for random generation
     srand(time(0));
 
-    //declare arrays to store users and ip addresses
+    //declare arrays to store users and ip addresses, and config object containing configuration functions
     User arrUsers[100];
-    Config config;
+    Config file_manager;
     string arrAddresses[254], dnsServer, dhcpServer, router_address = "192.168.0.1";
     //declare utility varialbles
     int privilege = 0, numUsers = 0, numAddresses = 0;
     bool isReset = false;
 
     //call the read_conf function to get the first startup variable
-    bool isFirstStartup = config.read_files(arrUsers, numUsers, arrAddresses, numAddresses, dnsServer, dhcpServer);
+    bool isFirstStartup = file_manager.read_files(arrUsers, numUsers, arrAddresses, numAddresses, dnsServer, dhcpServer);
 
-    //if the conf file does not exist of contains true the first startup function will be called
+    //if the conf file does not exist or contains true the first startup function will be called
     if (!isFirstStartup)
     {
         privilege = user_login(arrUsers, numUsers);
     }
     else
     {
-        privilege = first_startup(arrUsers, numUsers, dnsServer, dhcpServer);
+        privilege = user_setup(arrUsers, numUsers, dnsServer, dhcpServer);
     }
 
     if (privilege == -1)
@@ -855,9 +816,10 @@ int main()
                 staticAddress_menu(arrAddresses, numAddresses);
                 break;
             case 4:
+                //checks if user has required privileges
                 if (privilege == 0)
                 {
-                    user_management(arrUsers, numUsers);
+                    userManagement_menu(arrUsers, numUsers);
                 }
                 else
                 {
@@ -865,11 +827,10 @@ int main()
                 }
                 break;
             case 5:
-                //exit the menu and program if the function returns true
+                //checks if user has required privileges
                 if (privilege == 0)
                 {
-                    //reset_system();
-                    if(reset_system())
+                    if(systemReset_menu())
                     {
                         isReset = true;
                         option = 0;
@@ -889,7 +850,7 @@ int main()
     //save user and ip address files
     if (isReset == false)
     {
-        config.save_files(arrUsers, numUsers, arrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
+        file_manager.save_files(arrUsers, numUsers, arrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
         cout << "Saving files" << endl;
     }
 
