@@ -10,99 +10,136 @@ const string ROUTER_ADDRESS = "192.168.0.1";
 
 //this struct will define the format of a given user
 class User {
-    public:
+public:
     string username;
     string password;
     int privilege;
 };
 
-bool read_files(User arrUsers[], int &numUsers, string arrAddresses[], int &numAddresses, string& dnsServer, string& dhcpServer)
+//class contains functions related to the reading and writing of config files
+class Config
 {
-    //init first startup bool and declare as true
-    bool isFirstStartup;
-
-    //checks if the startup config file exists and creates it if it doesnt
-    string confFile {"startup.conf"};
-    string confString;
-    ifstream inFile {confFile};
-
-    if (!inFile)
+public:
+    bool read_files(User arrUsers[], int &numUsers, string arrAddresses[], int &numAddresses, string& dnsServer, string& dhcpServer)
     {
-        ofstream outFile {confFile};
-        outFile << "false";
-        isFirstStartup = true;
-    }
-    //if it does exist, we get the value of the first line that defines the value for a bool isFirstStartup
-    else
-    {
-        getline(inFile, confString);        //this denotes the first startup bool
-        getline(inFile, dnsServer);         //this denotes the dns server entry
-        getline(inFile, dhcpServer);        //this denotes the dhcp server entry
+        //init first startup bool and declare as true
+        bool isFirstStartup;
 
-        //will set isFirstStartup to false if the condition is false
-        isFirstStartup = (confString == "true");
-    }
+        //checks if the startup config file exists and creates it if it doesnt
+        string confFile {"startup.conf"};
+        string confString;
+        ifstream inFile {confFile};
 
-    //create files
-    ofstream outUsers {"users.txt", ios::app};
-    ofstream outAddresses {"addresses.txt", ios::app};
-    //create the users.txt file that stores added users and add them to an array defined by the User class
-    ifstream inUsers {"users.txt"};
-    ifstream inAddresses {"addresses.txt"};
-    string userString, ipString;
-
-
-
-    //read contents of user.txt and add them to arrUsers array if file is accessible
-    if (!inUsers.is_open())
-    {
-        cout << "users.txt could not be opened. Previously created users will not be displayed." << endl;
-    }
-    else
-    {
-        //get user details per line using getline method
-        for(int i = 0; getline(inUsers, userString); i++)
+        if (!inFile)
         {
-            stringstream ss(userString);
-            string privilegeString;
-
-            //fetch each value of user details and store in array
-            //!!privilege is incompattible with with array and is converted after fetching
-            getline(ss, arrUsers[i].username, ',');
-            getline(ss, arrUsers[i].password, ',');
-            getline(ss, privilegeString);
-
-            //converts privilege received from file to int and store in array
-            arrUsers[i].privilege = stoi(privilegeString);
-            //increase number of users with 1
-            numUsers++;
+            ofstream outFile {confFile};
+            outFile << "false";
+            isFirstStartup = true;
         }
-        inUsers.close();
-    }
-    //read contents of addresses.txt and add them to arrAddresses if file is accessible
-    if (!inAddresses.is_open())
-    {
-        cout << "addresses.txt could not be opened. Previously configured static addresses will not be displayed" << endl;
-    }
-    else
-    {
-        for(int i = 0; getline(inAddresses, ipString); i++)
+        //if it does exist, we get the value of the first line that defines the value for a bool isFirstStartup
+        else
         {
-            arrAddresses[i] = ipString;
-            //increase number of addresses with 1
-            numAddresses++;
+            getline(inFile, confString);        //this denotes the first startup bool
+            getline(inFile, dnsServer);         //this denotes the dns server entry
+            getline(inFile, dhcpServer);        //this denotes the dhcp server entry
+
+            //will set isFirstStartup to false if the condition is false
+            isFirstStartup = (confString == "true");
         }
 
-        inAddresses.close();
+        //create files
+        ofstream outUsers {"users.txt", ios::app};
+        ofstream outAddresses {"addresses.txt", ios::app};
+        //create the users.txt file that stores added users and add them to an array defined by the User class
+        ifstream inUsers {"users.txt"};
+        ifstream inAddresses {"addresses.txt"};
+        string userString, ipString;
+
+
+
+        //read contents of user.txt and add them to arrUsers array if file is accessible
+        if (!inUsers.is_open())
+        {
+            cout << "users.txt could not be opened. Previously created users will not be displayed." << endl;
+        }
+        else
+        {
+            //get user details per line using getline method
+            for(int i = 0; getline(inUsers, userString); i++)
+            {
+                stringstream ss(userString);
+                string privilegeString;
+
+                //fetch each value of user details and store in array
+                //!!privilege is incompattible with with array and is converted after fetching
+                getline(ss, arrUsers[i].username, ',');
+                getline(ss, arrUsers[i].password, ',');
+                getline(ss, privilegeString);
+
+                //converts privilege received from file to int and store in array
+                arrUsers[i].privilege = stoi(privilegeString);
+                //increase number of users with 1
+                numUsers++;
+            }
+            inUsers.close();
+        }
+        //read contents of addresses.txt and add them to arrAddresses if file is accessible
+        if (!inAddresses.is_open())
+        {
+            cout << "addresses.txt could not be opened. Previously configured static addresses will not be displayed" << endl;
+        }
+        else
+        {
+            for(int i = 0; getline(inAddresses, ipString); i++)
+            {
+                arrAddresses[i] = ipString;
+                //increase number of addresses with 1
+                numAddresses++;
+            }
+
+            inAddresses.close();
+        }
+
+        //close file
+        inFile.close();
+
+        //return the value read from the conf file
+        //if the text value is true it will return true, if it's false it will return false
+        return isFirstStartup;
     }
 
-    //close file
-    inFile.close();
+    void save_files(const User arrUsers[], const int& numUsers,string arrAddresses[], const int& numAddresses,
+                const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
+    {
+        //open txt files for saving
+        ofstream outConf {"startup.conf"};
+        ofstream outUsers {"users.txt"};
+        ofstream outAddresses {"addresses.txt"};
 
-    //return the value read from the conf file
-    //if the text value is true it will return true, if it's false it will return false
-    return isFirstStartup;
-}
+        //write server addresses to conf file
+        outConf << "false" << endl
+                << dnsServer << endl
+                << dhcpServer;
+
+        //write users to users.txt
+        for (int i = 0; i < numUsers; i++)
+        {
+            outUsers << arrUsers[i].username << "," << arrUsers[i].password << "," << arrUsers[i].privilege << endl;
+        }
+
+        //write ip addresses to addresses.txt
+        for (int i = 0; i < numAddresses; i++)
+        {
+            outAddresses << arrAddresses[i] << endl;
+        }
+
+        //close the files that where written to
+        outUsers.close();
+        outAddresses.close();
+    }
+
+
+};
 
 //gets users from users.txt and adds to arrUsers object
 void get_users(User arrUsers[], int& numUsers) {
@@ -740,36 +777,6 @@ bool reset_system()
     return false;
 }
 
-void save_files(const User arrUsers[], const int& numUsers,string arrAddresses[], const int& numAddresses,
-                const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
-{
-    //open txt files for saving
-    ofstream outConf {"startup.conf"};
-    ofstream outUsers {"users.txt"};
-    ofstream outAddresses {"addresses.txt"};
-
-    //write server addresses to conf file
-    outConf << "false" << endl
-            << dnsServer << endl
-            << dhcpServer;
-
-    //write users to users.txt
-    for (int i = 0; i < numUsers; i++)
-    {
-        outUsers << arrUsers[i].username << "," << arrUsers[i].password << "," << arrUsers[i].privilege << endl;
-    }
-
-    //write ip addresses to addresses.txt
-    for (int i = 0; i < numAddresses; i++)
-    {
-        outAddresses << arrAddresses[i] << endl;
-    }
-
-    //close the files that where written to
-    outUsers.close();
-    outAddresses.close();
-}
-
 int main()
 {
     //set seed for random generation
@@ -777,13 +784,14 @@ int main()
 
     //declare arrays to store users and ip addresses
     User arrUsers[100];
+    Config config;
     string arrAddresses[254], dnsServer, dhcpServer, router_address = "192.168.0.1";
     //declare utility varialbles
     int privilege = 0, numUsers = 0, numAddresses = 0;
     bool isReset = false;
 
     //call the read_conf function to get the first startup variable
-    bool isFirstStartup = read_files(arrUsers, numUsers, arrAddresses, numAddresses, dnsServer, dhcpServer);
+    bool isFirstStartup = config.read_files(arrUsers, numUsers, arrAddresses, numAddresses, dnsServer, dhcpServer);
 
     //if the conf file does not exist of contains true the first startup function will be called
     if (!isFirstStartup)
@@ -881,7 +889,7 @@ int main()
     //save user and ip address files
     if (isReset == false)
     {
-        save_files(arrUsers, numUsers, arrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
+        config.save_files(arrUsers, numUsers, arrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
         cout << "Saving files" << endl;
     }
 
