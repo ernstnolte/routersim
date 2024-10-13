@@ -21,20 +21,18 @@ class File_Reader
 {
 public:
     //reads save files and assigns values to arrays and bools
-    bool read_files(const shared_ptr<User[]> &arrUsers, int& numUsers, shared_ptr<string[]> &arrAddresses, int& numAddresses, string& dnsServer, string& dhcpServer)
+    static bool read_files(const shared_ptr<User[]> &arrUsers, int& numUsers, shared_ptr<string[]> &arrAddresses, int& numAddresses, string& dnsServer, string& dhcpServer)
     {
         //init first startup bool and declare as true
         bool isFirstStartup;
 
-        //checks if the startup config file exists and creates it if it doesnt
+        //checks if the startup config file exists and creates it if it doesn't
         string confFile {"startup.conf"};
         string confString;
         ifstream inFile {confFile};
 
         if (!inFile)
         {
-            ofstream outFile {confFile};
-            outFile << "false";
             isFirstStartup = true;
         }
         //if it does exist, we get the value of the first line that defines the value for a bool isFirstStartup
@@ -44,7 +42,7 @@ public:
             getline(inFile, dnsServer);         //this denotes the dns server entry
             getline(inFile, dhcpServer);        //this denotes the dhcp server entry
 
-            //will set isFirstStartup to false if the condition is false
+            //reads value of confString to determine first startup
             isFirstStartup = (confString == "true");
         }
 
@@ -110,7 +108,7 @@ public:
     }
 
     //assigns items in arrays to save files
-    void save_files(const shared_ptr<User[]> &arrUsers, const int& numUsers, shared_ptr<string[]> &arrAddresses, const int& numAddresses, const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
+    static void save_files(const shared_ptr<User[]> &arrUsers, const int& numUsers, shared_ptr<string[]> &arrAddresses, const int& numAddresses, const string& dnsServer, const string& dhcpServer)
     {
         //open txt files for saving
         ofstream outConf {"startup.conf"};
@@ -224,7 +222,7 @@ bool valid_password(const string &password)
      * 1 special character as defined below
      * must be at least 8 characters long    */
 
-    //specify the special character and initialaze the condition booleans
+    //specify the special character and initialize the condition booleans
     const string specialChars = "!@#$%^&*()-_=+[]{}|;:.<>?";
     bool hasUpper, hasLower, hasDigit, hasSpecial;
 
@@ -320,8 +318,7 @@ int user_setup(User arrUsers[], int& numUsers, string& dnsServer, string& dhcpSe
             validIP = true;
         }
     } while(!validIP);
-    //reset ip validation bool
-    validIP = false;
+
     //get dhcp server from user
     do
     {
@@ -344,8 +341,8 @@ int user_setup(User arrUsers[], int& numUsers, string& dnsServer, string& dhcpSe
     return 0;
 }
 
-//gets user info and returns a int representing user privilege level
-int user_login(User arrUsers[], int& numUsers)
+//gets user info and returns an int representing user privilege level
+int user_login(User arrUsers[], const int& numUsers)
 {
     //init login variables
     int index;
@@ -529,7 +526,7 @@ void serverAddress_menu(const string& concatString, string& address)
             }
             else
             {
-                //set user input addess as new server address
+                //set user input address as new server address
                 address = newAddress;
                 cout << endl << concatString << " server address changed successfully." << endl;
 
@@ -694,9 +691,10 @@ bool systemReset_menu()
             //their choice by repeating a randomly generated 7 digit integer
                 case 1:
                 {
-                    int randNum, compareNum;
+                    int compareNum;
+                    int randNum = 1000000 + (rand() % 9000000);
                     cout << "Confirm by entering the 7 digit pin shown below:" << endl;
-                    randNum = 1000000 + (rand() % 9000000);
+
                     cout << randNum << " : ";
                     cin >> compareNum;
 
@@ -746,7 +744,7 @@ int main()
     User arrUsers[100];
     File_Reader file_manager;
     string arrAddresses[254], dnsServer, dhcpServer, router_address = "192.168.0.1";
-    //declare utility varialbles
+    //declare utility variables
     int privilege = 0, numUsers = 0, numAddresses = 0;
     bool isReset = false;
 
@@ -853,7 +851,7 @@ int main()
     //save user and ip address files
     if (isReset == false)
     {
-        file_manager.save_files(pArrUsers, numUsers, pArrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
+        file_manager.save_files(pArrUsers, numUsers, pArrAddresses, numAddresses, dnsServer, dhcpServer);
         cout << "Saving files" << endl;
     }
 
