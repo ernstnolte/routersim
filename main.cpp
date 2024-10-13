@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <memory>
 #include <ctime>
 
 using namespace std;
@@ -9,7 +10,7 @@ using namespace std;
 //declare router address constant
 const string ROUTER_ADDRESS = "192.168.0.1";
 
-//this struct will define the format of a given user
+//define the structure of a user
 class User {
 public:
     string username;
@@ -18,10 +19,11 @@ public:
 };
 
 //class contains functions related to the reading and writing of config files
-class Config
+class File_Reader
 {
 public:
-    bool read_files(User arrUsers[], int &numUsers, string arrAddresses[], int &numAddresses, string& dnsServer, string& dhcpServer)
+    //reads save files and assigns values to arrays and bools
+    bool read_files(const shared_ptr<User[]> &arrUsers, int& numUsers, shared_ptr<string[]> &arrAddresses, int& numAddresses, string& dnsServer, string& dhcpServer)
     {
         //init first startup bool and declare as true
         bool isFirstStartup;
@@ -109,7 +111,8 @@ public:
         return isFirstStartup;
     }
 
-    void save_files(const User arrUsers[], const int& numUsers,string arrAddresses[], const int& numAddresses, const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
+    //assigns items in arrays to save files
+    void save_files(const shared_ptr<User[]> &arrUsers, const int& numUsers, shared_ptr<string[]> &arrAddresses, const int& numAddresses, const bool& isFirstStartup, const string& dnsServer, const string& dhcpServer)
     {
         //open txt files for saving
         ofstream outConf {"startup.conf"};
@@ -343,6 +346,7 @@ int user_setup(User arrUsers[], int& numUsers, string& dnsServer, string& dhcpSe
     return 0;
 }
 
+//gets user info and returns a int representing user privilege level
 int user_login(User arrUsers[], int& numUsers)
 {
     //init login variables
@@ -554,8 +558,6 @@ void serverAddress_menu(const string& concatString, string& address)
 void userManagement_menu(User arrUsers[], int& numUsers)
 {
     int menuChoice = 0;
-    User* pUsers = arrUsers;
-
     do
     {
         //table headings
@@ -673,8 +675,7 @@ void userManagement_menu(User arrUsers[], int& numUsers)
     system("cls");
 }
 
-//this function allows the user to reset the router
-//done by overwriting all txt files and setting the conf file contents to default values
+//delete user and addresses text files and set startup file to default true value
 bool systemReset_menu()
 {
     int option;
@@ -741,18 +742,22 @@ bool systemReset_menu()
 int main()
 {
     //set seed for random generation
-    srand(time(0));
+    srand(time(nullptr));
 
     //declare arrays to store users and ip addresses, and config object containing configuration functions
     User arrUsers[100];
-    Config file_manager;
+    File_Reader file_manager;
     string arrAddresses[254], dnsServer, dhcpServer, router_address = "192.168.0.1";
     //declare utility varialbles
     int privilege = 0, numUsers = 0, numAddresses = 0;
     bool isReset = false;
 
+    //assign smart pointers to arrays
+    auto pArrUsers = shared_ptr<User[]>(arrUsers, [](User*) {});
+    auto pArrAddresses = shared_ptr<string[]>(arrAddresses, [](string*) {});
+
     //call the read_conf function to get the first startup variable
-    bool isFirstStartup = file_manager.read_files(arrUsers, numUsers, arrAddresses, numAddresses, dnsServer, dhcpServer);
+    bool isFirstStartup = file_manager.read_files(pArrUsers, numUsers, pArrAddresses, numAddresses, dnsServer, dhcpServer);
 
     //if the conf file does not exist or contains true the first startup function will be called
     if (!isFirstStartup)
@@ -850,7 +855,7 @@ int main()
     //save user and ip address files
     if (isReset == false)
     {
-        file_manager.save_files(arrUsers, numUsers, arrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
+        file_manager.save_files(pArrUsers, numUsers, pArrAddresses, numAddresses, isFirstStartup, dnsServer, dhcpServer);
         cout << "Saving files" << endl;
     }
 
