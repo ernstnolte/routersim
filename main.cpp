@@ -1,16 +1,14 @@
 //43769780 EH Nolte
 #include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <memory>
-#include <ctime>
-
+#include <fstream>      //file handling
+#include <iomanip>      //setw
+#include <memory>       //smart pointers
+#include <ctime>        //random number generation
 using namespace std;
-
-//declare router address constant
+//declares router address constant
 const string ROUTER_ADDRESS = "192.168.0.1";
 
-//define the structure of a user
+//defines the structure of a user
 class User {
 public:
     string username;
