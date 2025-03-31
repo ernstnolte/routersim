@@ -5,7 +5,7 @@ I chose to write my code using the JetBrains Clion IDE for the following reasons
 -- more modern interface compared to alternatives like Codeblocks
 -- easy setup of compiler
 
-## The following functions will be replicated
+## The following functions are simulated
 - basic user management
   + create / delete
 - permission levels
