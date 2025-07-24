@@ -1,4 +1,8 @@
 //43769780 EH Nolte
+
+// TO-DO: merge methods 
+// TO-DO: move classes to separate files
+
 #include <iostream>
 #include <fstream>      //file handling
 #include <iomanip>      //setw
